@@ -1,0 +1,61 @@
+table: subscriptions
+description: Contains subscription details for users, including plan and lifecycle status
+
+fields:
+  - name: subscription_id
+    type: integer
+    description: Unique identifier for each subscription
+    role: entity
+
+  - name: user_id
+    type: integer
+    description: Links each subscription to a user
+    role: relationship
+    related_table: users
+    related_field: user_id
+
+  - name: plan
+    type: string
+    description: Subscription plan selected by the user
+    role: dimension
+
+  - name: start_date
+    type: date
+    description: The date when the subscription started
+    role: dimension
+
+  - name: end_date
+    type: date
+    description: The date when the subscription ended or is scheduled to end
+    role: dimension
+
+  - name: status
+    type: string
+    description: Current status of the subscription
+    role: dimension
+
+measures:
+  - name: total_subscriptions
+    formula: COUNT(subscription_id)
+    description: Total number of subscriptions
+
+  - name: active_subscriptions
+    formula: COUNT(CASE WHEN status = 'active' THEN subscription_id END)
+    description: Total number of active subscriptions
+
+golden_queries:
+  - name: active_subscriptions_by_plan
+    description: Count of active subscriptions grouped by plan
+    sql: |
+      SELECT plan, COUNT(subscription_id) AS active_subscriptions
+      FROM subscriptions
+      WHERE status = 'active'
+      GROUP BY plan;
+
+  - name: subscriptions_by_country
+    description: Total subscriptions grouped by user country
+    sql: |
+      SELECT u.country, COUNT(s.subscription_id) AS total_subscriptions
+      FROM subscriptions s
+      JOIN users u ON s.user_id = u.user_id
+      GROUP BY u.country;

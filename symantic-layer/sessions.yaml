@@ -1,0 +1,59 @@
+table: sessions
+description: Contains user session activity data in the app
+
+fields:
+  - name: session_id
+    type: integer
+    description: Unique identifier for each session
+    role: entity
+
+  - name: user_id
+    type: integer
+    description: Links each session to a user
+    role: relationship
+    related_table: users
+    related_field: user_id
+
+  - name: session_date
+    type: date
+    description: The date when the session occurred
+    role: dimension
+
+  - name: duration_minutes
+    type: numeric
+    description: Duration of the session in minutes
+    role: measure
+
+  - name: activity_type
+    type: string
+    description: Type of activity performed during the session
+    role: dimension
+
+measures:
+  - name: total_sessions
+    formula: COUNT(session_id)
+    description: Total number of sessions
+
+  - name: total_session_duration
+    formula: SUM(duration_minutes)
+    description: Total duration of all sessions in minutes
+
+  - name: average_session_duration
+    formula: AVG(duration_minutes)
+    description: Average duration of a session in minutes
+
+golden_queries:
+  - name: sessions_by_activity_type
+    description: Total sessions grouped by activity type
+    sql: |
+      SELECT activity_type, COUNT(session_id) AS total_sessions
+      FROM sessions
+      GROUP BY activity_type;
+
+  - name: avg_session_duration_by_country
+    description: Average session duration grouped by user country
+    sql: |
+      SELECT u.country, AVG(s.duration_minutes) AS avg_session_duration
+      FROM sessions s
+      JOIN users u ON s.user_id = u.user_id
+      GROUP BY u.country;
